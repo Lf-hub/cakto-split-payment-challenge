@@ -1,3 +1,29 @@
-from django.shortcuts import render
+from rest_framework import viewsets, status
+from rest_framework.response import Response
+from rest_framework.decorators import action
+from payments.models import Transaction, Split, StatusSplit
+from payments.serializers import TransactionSerializer, SplitSerializer
 
-# Create your views here.
+class TransactionViewSet(viewsets.ModelViewSet):
+    queryset = Transaction.objects.all()
+    serializer_class = TransactionSerializer
+
+
+class SplitViewSet(viewsets.ModelViewSet):
+    queryset = Split.objects.all()
+    serializer_class = SplitSerializer
+
+    @action(detail=True, methods=['patch'])
+    def update_status(self, request, pk=None):
+        split = self.get_object()
+        status_value = request.data.get('status')
+        
+        try:
+            status_obj = StatusSplit.objects.get(slug=status_value)
+        except StatusSplit.DoesNotExist:
+            return Response({"error": "Status inválido"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        split.status = status_obj
+        split.save()
+        serializer = SplitSerializer(split)
+        return Response(serializer.data)

@@ -1,5 +1,6 @@
 from django.test import TestCase
-from .models import Transaction, Split
+from payments.models import Transaction, Split, StatusSplit
+
 
 class TransactionSplitTest(TestCase):
     def setUp(self):
@@ -8,12 +9,13 @@ class TransactionSplitTest(TestCase):
             amount=100.00,
             raw_data={"source": "test"}
         )
+        self.status_pending = StatusSplit.objects.create(name="Pendente", slug="pending")
 
     def test_create_splits(self):
         # splits
-        Split.objects.create(transaction=self.transaction, user="João", amount=40.00)
-        Split.objects.create(transaction=self.transaction, user="Maria", amount=30.00)
-        Split.objects.create(transaction=self.transaction, user="Pedro", amount=30.00)
+        Split.objects.create(transaction=self.transaction, user="João", amount=40.00, status=self.status_pending)
+        Split.objects.create(transaction=self.transaction, user="Maria", amount=30.00, status=self.status_pending)
+        Split.objects.create(transaction=self.transaction, user="Pedro", amount=30.00, status=self.status_pending)
 
         # getl all transactions
         splits = self.transaction.splits.all()
