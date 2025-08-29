@@ -9,8 +9,9 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
-
+import os
 from pathlib import Path
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -19,8 +20,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
+# Detecta se está rodando no Docker
+RUNNING_IN_DOCKER = os.path.exists('/.dockerenv')
+
+# Carrega o .env correto
+if RUNNING_IN_DOCKER:
+    load_dotenv(BASE_DIR.parent / '.env.docker')  # você pode criar este para Docker
+else:
+    load_dotenv(BASE_DIR / '.env')  # .env local
+
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-@!2z-%*k__s*$_$@4ut__*cmq-x+l(n5ev660)u11tt6u8ktbc'
+SECRET_KEY = os.getenv("SECRET_KEY", "unsafe-secret-key")
+DEBUG = os.getenv("DEBUG", "True") == "True"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -75,11 +86,14 @@ WSGI_APPLICATION = 'app.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv("POSTGRES_DB", "cakto_db"),
+        'USER': os.getenv("POSTGRES_USER", "cakto_user"),
+        'PASSWORD': os.getenv("POSTGRES_PASSWORD", "cakto_pass"),
+        'HOST': os.getenv("POSTGRES_HOST", "localhost" if not RUNNING_IN_DOCKER else "cakto_db"),
+        'PORT': os.getenv("POSTGRES_PORT", "5432"),
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
